@@ -46,6 +46,30 @@ import java.util.Collections;
 
 public class MainActivity extends AppCompatActivity {
 
+    // 10种题目类型
+    public static final String SCL_90 = "SCL_90";// 总表
+    public static final String SOM = "SOM";// 身体化
+    public static final String O_C = "O_C";// 强迫症状
+    public static final String I_S = "I_S";// 人际关系敏感
+    public static final String DEP = "DEP";// 抑郁症状
+    public static final String ANX = "ANX";// 焦虑症状
+    public static final String HOS = "HOS";// 敌对行为
+    public static final String PHOB = "PHOB";// 恐惧症状
+    public static final String PAR = "PAR";// 偏执症状
+    public static final String PSY = "PSY";// 精神病性症状
+
+    // 子表题号
+    private int[] SOMNUM = {1, 4, 12, 27, 40, 42, 48, 49, 52, 53, 56, 58};
+    private int[] O_CNUM = {3, 9, 10, 28, 38, 45, 46, 51, 55, 65};
+    private int[] I_SNUM = {6, 21, 34, 36, 37, 41, 61, 69, 73};
+    private int[] DEPNUM = {5, 14, 15, 20, 22, 26, 29, 30, 31, 32, 54, 71, 79};
+    private int[] ANXNUM = {2, 17, 23, 33, 39, 57, 72, 78, 80, 86};
+    private int[] HOSNUM = {11, 24, 63, 67, 74, 81};
+    private int[] PHOBNUM = {13, 25, 47, 50, 70, 75, 82};
+    private int[] PARNUM = {8, 18, 43, 68, 76, 83};
+    private int[] PSYNUM = {7, 16, 35, 62, 77, 84, 85, 87, 88, 90};
+
+
     public static final String QUESTION_NUMBER = "QUESTION_NUMBER";
     public static final String QUESTIONS = "QUESTIONS";
 
@@ -66,15 +90,12 @@ public class MainActivity extends AppCompatActivity {
     private View optionsView;
     private Toast toast;
 
-    /**
-     * Set up a listener for the next button to display next Question
-     * start a new activity displaying quiz results when all questions are done
-     */
+    // 下一题点击事件
     private View.OnClickListener nextButtonClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View view) {
 
-            //save current set answer before displaying the next question
+            // 保存当前答案
             saveUserAnswer();
 
             //if the current question is unanswered, alert the user as all questions are mandatory
@@ -97,10 +118,7 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    /**
-     * Set up a listener for the previous button to display previous Question
-     * display a toast message when button is clicked while in the first question
-     */
+    // 上一题点击事件，当当前问题为第一题的时候提醒用户无法在进行上一题操作
     private View.OnClickListener prevButtonClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
@@ -291,10 +309,7 @@ public class MainActivity extends AppCompatActivity {
         optionsType = currentOptionsType;
     }
 
-    /**
-     * save the user answer on click of either the next, previous or review button
-     * the method is also called by saveInstance state (orientation change or minimizing the app)
-     */
+    // 利用saveInstance保存当前做完的题目的答案，防止用户不小心推出程序后丢失数据
     private void saveUserAnswer() {
 
         if (qNumber < questions.size()) {
@@ -436,7 +451,7 @@ public class MainActivity extends AppCompatActivity {
     // 跳转到结果页面
     private void displayResults() {
         Intent intent = new Intent(MainActivity.this,
-                ResultsActivity.class);
+                SelectScaleActivity.class);
         intent.putExtra(QUESTIONS, questions);
         startActivity(intent);
         finish();
@@ -506,11 +521,13 @@ public class MainActivity extends AppCompatActivity {
 
     // 加载问题
     public ArrayList<Question> getAllQuestions(){
+        // 定义一个问题列表来装问题
         ArrayList<Question> questionArrayList=new ArrayList<>();
         Question question=null;
         InputStreamReader inputStreamReader=null;
         String questionData="";
         try{
+            // 使用文件流读取json文件获取题目数据
             inputStreamReader=new InputStreamReader(getResources().openRawResource(R.raw.question), StandardCharsets.UTF_8);
             BufferedReader bufferedReader=new BufferedReader(inputStreamReader);
             String line;
@@ -521,13 +538,59 @@ public class MainActivity extends AppCompatActivity {
             inputStreamReader.close();
             bufferedReader.close();
             questionData=stringBuilder.toString();
+            // 使用JSONObject对象解析获取到的字符串
             JSONObject jsonObject=new JSONObject(questionData);
-            for(int i=0;i<jsonObject.length();i++){
-                String questionText=jsonObject.getString(String.valueOf(i+1));
-                question=new Question(questionText,RADIOBUTTON,getResources().getStringArray(R.array.q1_options),Collections.singletonList(0));
-                questionArrayList.add(question);
-            }
 
+            // 判断要显示哪一类题目
+            Intent intent=getIntent();
+            String questionType=intent.getStringExtra("questionType");
+            int[] questionNum=null;// 要返回的题号
+            // 获取总表题目
+            if(questionType.equals(SCL_90)){
+                for(int i=0;i<jsonObject.length();i++){
+                    String questionText=jsonObject.getString(String.valueOf(i+1));
+                    question=new Question(questionText,RADIOBUTTON,getResources().getStringArray(R.array.q1_options),Collections.singletonList(0));
+                    questionArrayList.add(question);
+                }
+            }else {
+                switch (questionType){
+                    case SOM:
+                        questionNum=SOMNUM;
+                        break;
+                    case O_C:
+                        questionNum=O_CNUM;
+                        break;
+                    case I_S:
+                        questionNum=I_SNUM;
+                        break;
+                    case DEP:
+                        questionNum=DEPNUM;
+                        break;
+                    case ANX:
+                        questionNum=ANXNUM;
+                        break;
+                    case HOS:
+                        questionNum=HOSNUM;
+                        break;
+                    case PHOB:
+                        questionNum=PHOBNUM;
+                        break;
+                    case PAR:
+                        questionNum=PARNUM;
+                        break;
+                    case PSY:
+                        questionNum=PSYNUM;
+                        break;
+                    default:
+                        break;
+                }
+                // 获取子表题目
+                for(int i=0;i<questionNum.length;i++){
+                    String questionText=jsonObject.getString(String.valueOf(questionNum[i]));
+                    question=new Question(questionText,RADIOBUTTON,getResources().getStringArray(R.array.q1_options),Collections.singletonList(0));
+                    questionArrayList.add(question);
+                }
+            }
         }catch (UnsupportedEncodingException e){
             e.printStackTrace();
         }catch (IOException e) {
@@ -535,6 +598,7 @@ public class MainActivity extends AppCompatActivity {
         } catch (JSONException e) {
             e.printStackTrace();
         }
+        // 返回对应题目
         return questionArrayList;
     }
 }
