@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@+id/root_layout"
     android:layout_width="match_parent"
@@ -12,8 +11,8 @@
         android:id="@+id/title_textview"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginBottom="16dp"
-        android:text="问卷调查结果"
+        android:layout_marginBottom="8dp"
+        android:text="评测结果"
         android:textAlignment="center"
         android:textSize="24sp" />
 
@@ -35,13 +34,14 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@android:color/darker_gray"
-            android:padding="16dp">
+            android:layout_marginTop="8dp"
+            android:layout_marginBottom="16dp">
 
             <TextView
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="等级" />
+                android:text="因子" />
 
             <TextView
                 android:layout_width="0dp"
@@ -53,11 +53,16 @@
                 android:layout_width="0dp"
                 android:layout_height="wrap_content"
                 android:layout_weight="1"
-                android:text="人数" />
+                android:text="结果" />
 
         </TableRow>
 
     </TableLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/black" />
 
     <!-- 建议文本 -->
     <TextView
@@ -65,15 +70,24 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="建议1"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
         android:textAlignment="center"
-        android:textSize="18sp" />
+        android:textSize="18sp"
+        android:layout_above="@id/advice_textview2"/>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/black" />
 
     <TextView
         android:id="@+id/advice_textview2"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="建议2"
+        android:layout_marginTop="8dp"
+        android:layout_marginBottom="16dp"
         android:textAlignment="center"
-        android:textSize="18sp" />
-
+        android:textSize="18sp"
+        android:layout_below="@id/advice_textview"/>
 </LinearLayout>

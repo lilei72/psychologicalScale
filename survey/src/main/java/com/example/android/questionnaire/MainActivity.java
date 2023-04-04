@@ -5,21 +5,13 @@ import static com.example.android.questionnaire.data.Options.RADIOBUTTON;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
 import android.os.Bundle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import android.text.InputType;
-import android.text.TextUtils;
-import android.util.Log;
+
 import android.view.Gravity;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.CheckBox;
-import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -30,11 +22,10 @@ import android.widget.Toast;
 
 import com.example.android.questionnaire.data.Options;
 import com.example.android.questionnaire.data.Question;
-import com.example.android.questionnaire.data.QuestionSet;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.litepal.tablemanager.Connector;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -44,7 +35,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Collections;
 
+import org.litepal.crud.LitePalSupport;
+
 public class MainActivity extends AppCompatActivity {
+    //直接解析json文件获得数据也没存到数据库，当时偷懒后面发现要分很多表很麻烦
+    //懒得改了，新增功能会改动很多，但现在也就用到一张表
 
     // 10种题目类型
     public static final String SCL_90 = "SCL_90";// 总表
@@ -72,6 +67,9 @@ public class MainActivity extends AppCompatActivity {
 
     public static final String QUESTION_NUMBER = "QUESTION_NUMBER";
     public static final String QUESTIONS = "QUESTIONS";
+    public static final String QUESTION_TYPE = "QUESTION_TYPE";
+
+    private String questionType;
 
     private TextView questionTextView;
     private TextView numOfQuestionsTextView;
@@ -98,16 +96,14 @@ public class MainActivity extends AppCompatActivity {
             // 保存当前答案
             saveUserAnswer();
 
-            //if the current question is unanswered, alert the user as all questions are mandatory
+            // 如果用户没有选择选项，提醒用户必须作答每一道题目
             if (!answered) {
                 alertQuestionUnanswered();
                 return;
             }
 
-            /*
-            increment the question number and display the next question
-            or display the results if it's the last question after confirming for submission from the user
-             */
+            // 当前题号+1，判断是否是最后一题，如果不是显示下一题
+            // 否则键刚才+1恢复，提醒用户是否提交
             qNumber++;
             if (qNumber < questions.size()) {
                 displayQuestion();
@@ -123,13 +119,10 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onClick(View v) {
 
-            //save current set answer before displaying the previous question
+            // 保存当前答案
             saveUserAnswer();
 
-            /*
-            decrement the question number and display the previous question
-            if this is the first question, display a toast message stating there are no previous questions
-             */
+            // 如果没有到第一题就显示上一题的题目，否则提醒用户当前已经是第一题
             if (qNumber > 0) {
                 qNumber--;
                 displayQuestion();
@@ -179,6 +172,9 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // 创建数据库(存储Result)
+        Connector.getDatabase();
+
         // 加载所有的题目
         questions = getAllQuestions();
         totalQuestions = questions.size();
@@ -189,36 +185,35 @@ public class MainActivity extends AppCompatActivity {
         displayQuestion();
     }
 
-    /**
-     * Display the questions from the set along with it's options, each question can
-     * have different number of options and different type of views for the inputs
-     */
+    // 显示题目的功能
     private void displayQuestion() {
 
-        //remove previous question and it's corresponding options
+        // 清除上一题的所有组件(可能后续会加入其它题型，组件不一样)
         optionsLinearLayout.removeAllViews();
 
-        //update the state of 'mark for review' TextView appropriately
+        // 更新下面该题是否被标记组件
+        // 如果被标记打勾
         if (questions.get(qNumber).isMarkedForReview()) {
             reviewTextView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_check_box, 0, 0, 0);
         } else {
             reviewTextView.setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_check_box_outline_blank, 0, 0, 0);
         }
 
-        //display the current question number and total number of questions
+        // 展示当前问题号和总问题数量
         String text = (qNumber + 1) + "/" + totalQuestions;
         numOfQuestionsTextView.setText(text);
 
-        //update the progress bar status
+        // 更新答题进度条
         progressBar.setProgress(qNumber);
 
+        // 初始化选项选择
         if (answered)
             answered = false;
-
+        // 向组件注入题目
         Question currentSet = questions.get(qNumber);
         questionTextView.setText(currentSet.getQuestion());
 
-        //set the button for last question to be 'Submit', rather than 'Next'
+        // 判断当前是否为最后一题，是就将下一题按钮变为提交，否则继续下一题
         if (qNumber == questions.size() - 1) {
             nextButton.setText(R.string.submit);
         } else {
@@ -229,148 +224,57 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
-    /**
-     * display options for each question - type could be Radiobuttons, checkboxes or edittext
-     * restore answers from question object that were saved on activity reload (orientation change, minimize app)
-     * or on clicking next, previous or review buttons
-     */
+    // 展示选项
     private void displayOptions() {
-
-        //get the current question and it's options
+        // 获取当前题目
         Question question = questions.get(qNumber);
         String[] options = question.getOptions();
-        Options currentOptionsType = question.getOptionsType();
 
-        switch (currentOptionsType) {
-
-            case RADIOBUTTON:
-                //For the case of radiobuttons, create a RadioGroup and add each option as a RadioButton
-                //to the group - set an ID for each RadioButton to be referred later
-// 获取圆形按钮的 drawable
-                RadioGroup radioGroup=new RadioGroup(this);
-                for(int i=0;i<options.length;i++){
-                    RadioButton button = new RadioButton(this);
-                    button.setText(options[i]);
-                    button.setId(i);
-                    radioGroup.addView(button);
-                }
-                // 调整整个单选框样式
-                // 获取RadioGroup的布局参数
-                optionsLinearLayout.addView(radioGroup);
-
-                //restore saved answers
-                if (question.getUserSetAnswerId() != null && question.getUserSetAnswerId().size() > 0) {
-                    RadioButton radioButton = (RadioButton) radioGroup.getChildAt(question.getUserSetAnswerId().get(0));
-                    radioButton.setChecked(true);
-                }
-
-                optionsView = radioGroup;
-                break;
-
-
-            case CHECKBOX:
-                //For the case of check boxes, create a new CheckBox for each option
-                for (String option : options) {
-                    CheckBox checkbox = new CheckBox(this);
-                    checkbox.setText(option);
-                    optionsLinearLayout.addView(checkbox);
-                }
-
-                //restore saved answers
-                if (question.getUserSetAnswerId() != null && question.getUserSetAnswerId().size() > 0) {
-                    for (int index : question.getUserSetAnswerId()) {
-                        ((CheckBox) optionsLinearLayout.getChildAt(index)).setChecked(true);
-                    }
-                }
-                optionsView = optionsLinearLayout;
-                break;
-
-            case EDITTEXT:
-                //For the case of edit text, display an EditText for the user to enter the answer
-                EditText editText = new EditText(this);
-                //set the InputType to display digits only keyboard if applicable
-                if (TextUtils.isDigitsOnly(questions.get(qNumber).getAnswer())) {
-                    editText.setInputType(InputType.TYPE_CLASS_NUMBER);
-                }
-
-                //restore saved answers, set hint text if answer is empty/remains unanswered
-                if (!TextUtils.isEmpty(question.getUserAnswer())) {
-                    editText.setText(question.getUserAnswer());
-                    editText.setSelection(question.getUserAnswer().length());
-                } else {
-                    editText.setHint(R.string.editText_hint);
-                }
-
-                optionsLinearLayout.addView(editText);
-
-                optionsView = editText;
-                break;
+        RadioGroup radioGroup=new RadioGroup(this);
+        radioGroup.setTag("unique_radio_group");
+        for(int i=0;i<options.length;i++){
+            RadioButton button = new RadioButton(this);
+            button.setText(options[i]);
+            button.setId(i); // 给每个选项一个id {0,1,2,3,4}
+            radioGroup.addView(button);
         }
-        optionsType = currentOptionsType;
+
+        // 获取RadioGroup的布局参数
+        optionsLinearLayout.addView(radioGroup);
     }
 
-    // 利用saveInstance保存当前做完的题目的答案，防止用户不小心推出程序后丢失数据
+    // 保存当前做完的题目的答案到questions列表里
     private void saveUserAnswer() {
 
         if (qNumber < questions.size()) {
+            // currentQuestion引用当前题目
+            // Java 中的基本数据类型和 String 类型是按值传递的，而对象类型则是按引用传递的。
             Question currentQuestion = questions.get(qNumber);
+            // 这里使用 ArrayList来保存答案是考虑以后可能加入多选题
             ArrayList<Integer> userSelectedAnswers = new ArrayList<>();
-
             String answer;
 
-            switch (optionsType) {
-                case RADIOBUTTON:
-                    //save the selected RadioButton IDs
-                    int selectedId = ((RadioGroup) optionsView).getCheckedRadioButtonId();
-                    RadioButton selectedRadioButton = findViewById(selectedId);
-                    Log.d("LiLei", "saveUserAnswer: "+selectedId);
+            // 拿到选中单选题的id,{0,1,2,3,4}
+            RadioGroup radioGroup=optionsLinearLayout.findViewWithTag("unique_radio_group");
+            int selectedId = radioGroup.getCheckedRadioButtonId();
+            RadioButton selectedRadioButton = findViewById(selectedId);
 
-                    if (selectedRadioButton == null) {
-                        return;
-                    } else {
-                        userSelectedAnswers.add(selectedId);
-                        currentQuestion.setUserSetAnswerId(userSelectedAnswers);
-                        answered = true;
-                    }
-                    break;
-
-                case CHECKBOX:
-                    //save checkbox IDs that have been checked by the user
-                    LinearLayout parentLayout = (LinearLayout) optionsView;
-                    int numOfCheckBox = parentLayout.getChildCount();
-                    for (int i = 0; i < numOfCheckBox; i++) {
-                        CheckBox childCheckBox = (CheckBox) parentLayout.getChildAt(i);
-                        if (childCheckBox.isChecked()) {
-                            userSelectedAnswers.add(i);
-                            answered = true;
-                        }
-                    }
-                    currentQuestion.setUserSetAnswerId(userSelectedAnswers);
-                    break;
-
-                case EDITTEXT:
-                    //save the EditText answer
-                    EditText answerText = (EditText) optionsView;
-                    answer = answerText.getText().toString();
-                    if (!TextUtils.isEmpty(answer)) {
-                        currentQuestion.setUserAnswer(answer);
-                        answered = true;
-                    } else {
-                        currentQuestion.setUserAnswer(null);
-                    }
-                    break;
+            // 判断单选按钮是否存在
+            if (selectedRadioButton == null) {
+                return;
+            } else {
+                // 存在就保存按钮id到userSelectedAnswers数组，并存入对应question中，将是否已答题状态改为true
+                userSelectedAnswers.add(selectedId);
+                currentQuestion.setUserSetAnswerId(userSelectedAnswers);
+                answered = true;
             }
         }
     }
 
-    /**
-     * called when `mark for review` option is checked ot unchecked by the user
-     *
-     * @param v `marker for review` textview reference
-     */
     // 设置是否标记为可预览
     private void setMarkerForReview(View v) {
         if (!questions.get(qNumber).isMarkedForReview()) {
+            // 设置为已被标记
             questions.get(qNumber).setMarkedForReview(true);
             ((TextView) v).setCompoundDrawablesWithIntrinsicBounds(R.drawable.ic_check_box, 0, 0, 0);
         } else {
@@ -379,12 +283,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Save the status of the quiz on activity stop/pause and restore the values
-     * again when recreated
-     * @param outState Bundle object used to save the state of the Activity
-     */
-    // 保存Acticivity被销毁前的状态：在离开页面的时候用onSaveInstanceState中的outState可以保存你所需要的值
+    // 保存MainActivity被销毁前的状态：在离开页面的时候用onSaveInstanceState中的outState可以保存你所需要的值
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
@@ -395,12 +294,7 @@ public class MainActivity extends AppCompatActivity {
         outState.putSerializable(QUESTIONS, questions);
     }
 
-
-    /**
-     * restore state of the quiz on activity resumes after stop/pause
-     * @param savedInstanceState provides access to the data prior to activity resume
-     */
-    // 恢复Acticivity被销毁前的状态：在重新回到该页面的时候可以使用onRestoreInstanceState从saveInstanceState中获取保存过得值来重新初始化界面
+    // 恢复MainActivity被销毁前的状态：在重新回到该页面的时候可以使用onRestoreInstanceState从saveInstanceState中获取保存过得值来重新初始化界面
     @Override
     @SuppressWarnings("unchecked")
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
@@ -412,22 +306,18 @@ public class MainActivity extends AppCompatActivity {
         displayQuestion();
     }
 
-    /**
-     * display an alert toast message to the user
-     * if the next button is clicked without answering the current question
-     */
+    // 当点击下一题的时候，如果当前题目没有作答要提醒用户作答
     private void alertQuestionUnanswered() {
         cancelToast();
 
         toast = Toast.makeText(this, R.string.no_answer_error, Toast.LENGTH_SHORT);
+        // toast.setGravity()方法用于设置Toast显示的位置。通过指定x和y坐标以及一个重心位置来决定Toast的位置
+        // 这里就是让toast显示在底部垂直偏移为258处
         toast.setGravity(Gravity.BOTTOM, 0, 258);
         toast.show();
     }
 
-    /**
-     * when the previous button is clicked while in the first questions
-     * display a toast message stating there are no previous questions
-     */
+    // 当点击上一题的时候，如果当前已经是第一题要提醒用户。
     private void alertNoPrevQuestions() {
         cancelToast();
 
@@ -436,48 +326,39 @@ public class MainActivity extends AppCompatActivity {
         toast.show();
     }
 
-    /**
-     * method to handle canceling of any previously displayed toast before displaying new one
-     */
+    // 在显示新的toast之前关闭原来的，防止重叠
     private void cancelToast() {
         if (toast != null)
             toast.cancel();
     }
 
-    /**
-     * Navigate to new activity when user presses submit button
-     * pass the questions object in the intent to be used by the ResultsActivity
-     */
-    // 跳转到结果页面
+    // 跳转到结果页面，携带questions问题列表
     private void displayResults() {
         Intent intent = new Intent(MainActivity.this,
-                SelectScaleActivity.class);
+                SurveyResultActivity.class);
         intent.putExtra(QUESTIONS, questions);
+        intent.putExtra(QUESTION_TYPE,questionType);
         startActivity(intent);
         finish();
     }
 
-    /**
-     * Navigate to new activity when user presses review list button
-     * - pass the questions object in the intent to be used by the ReviewAnswersActivity
-     */
-    // 跳转到标记的题目页面
+    // 跳转到标记的题目页面，携带questions问题列表
     private void displayReviewQuestions() {
         Intent intent = new Intent(MainActivity.this, ReviewAnswersActivity.class);
         intent.putExtra(QUESTIONS, questions);
         startActivity(intent);
     }
 
-    /**
-     * display submission confirmation dialog to the user after all questions have been answered
-     * display quiz activity exit confirmation if the back is pressed while the quiz is still ongoing
-     */
+    // 当用户作答完毕最后一题，提醒用户是否提交
     private void displayConfirmAlert(String message, final boolean isBackPressed) {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setMessage(message)
                 .setPositiveButton(R.string.confirm_yes, new DialogInterface.OnClickListener() {
+                    // 用户点击确认提交后如果按了返回键就退出程序，否则跳转到结果页面展示得分结果
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
+                        // 只要按了返回键就会调用，isBackPressed为true
+                        // 按submit键isBackPress为false
                         if(isBackPressed) {
                             finish();
                         } else {
@@ -486,6 +367,7 @@ public class MainActivity extends AppCompatActivity {
                     }
                 })
                 .setNegativeButton(R.string.confirm_cancel, new DialogInterface.OnClickListener() {
+                    // 当用户点击取消，关闭对话框
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         if(dialog != null) {
@@ -497,10 +379,12 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    /**
-     * new intent will be received when the user clicks on a `Go to question` button from the Review Answers activity
-     * @param intent intent object received from ReviewAnswersActivity - contains the question number to be displayed
-     */
+    // 当在当前活动中配置了singleTop启动模式，并且在其他活动中通过Intent对象启动当前活动时
+    // 如果当前活动已经在栈顶，则会调用onNewIntent()方法。
+
+    // 当用户从ReviewActivity选中一个题目跳转到MainActivity中重新作答的时候
+    // MainActivity将接收到一个新的intent对象，该对象中包含了问题编号
+    // MainActivity拿到这个问题编号后显示这个问题
     @Override
     protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -510,10 +394,8 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * if back is pressed while taking the quiz, alert the user that the answers will be lost
-     * and confirm exiting the quiz activity
-     */
+    // 当程序运行时如果用户在MainActivity活动中按下返回键
+    // 调用displayConfirmAlert方法提醒用户可能会失去数据
     @Override
     public void onBackPressed() {
         displayConfirmAlert(getString(R.string.exit_confirm), true);
@@ -543,7 +425,7 @@ public class MainActivity extends AppCompatActivity {
 
             // 判断要显示哪一类题目
             Intent intent=getIntent();
-            String questionType=intent.getStringExtra("questionType");
+            questionType=intent.getStringExtra(QUESTION_TYPE);
             int[] questionNum=null;// 要返回的题号
             // 获取总表题目
             if(questionType.equals(SCL_90)){

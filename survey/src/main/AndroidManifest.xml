@@ -3,7 +3,7 @@
     package="com.example.android.questionnaire">
 
     <application
-        android:name="com.example.android.questionnaire.MyApplication"
+        android:name="org.litepal.LitePalApplication"
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
@@ -24,12 +24,16 @@
         </activity>
         <activity android:name=".MainActivity"></activity>
         <activity
-            android:name=".ResultsActivity"
+            android:name=".SurveyResultActivity"
             android:label="@string/results"
             android:theme="@style/CustomTheme" />
         <activity
             android:name=".ReviewAnswersActivity"
             android:label="@string/review"
+            android:theme="@style/CustomTheme" />
+        <activity
+            android:name=".SelectScaleActivity"
+            android:label="Select"
             android:theme="@style/CustomTheme" />
     </application>
 

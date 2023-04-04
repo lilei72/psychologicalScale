@@ -1,11 +1,15 @@
 package com.example.android.questionnaire.data;
-// 计算得分后返回显示的结果
-public class Result {
 
+import org.litepal.crud.LitePalSupport;
+
+// 计算得分后返回显示的结果
+public class Result extends LitePalSupport {
+    // 10种问题类型
     private String questionType;
 
     private float score;
 
+    // 说明建议
     private String description;
 
     public Result(String questionType, float score, String description) {

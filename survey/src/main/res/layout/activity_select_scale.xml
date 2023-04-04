@@ -2,11 +2,127 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    >
+    android:orientation="vertical">
+
     <Button
-        android:id="@+id/test_button"
+        android:id="@+id/scl_90"
+        android:background="@drawable/scale_button"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="Test"/>
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="SCL90症状自评量表"
+        android:textSize="20sp"
+        android:paddingLeft="16dp"
+        android:gravity="left|center_vertical"
+        android:textColor="#00447d"/>
+
+    <Button
+        android:id="@+id/som"
+        android:background="@drawable/scale_button"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="躯体化自评量表"
+        android:textSize="20sp"
+        android:paddingLeft="16dp"
+        android:gravity="left|center_vertical"
+        android:textColor="#00447d"/>
+
+    <Button
+        android:id="@+id/o_c"
+        android:background="@drawable/scale_button"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="强迫症自测量表"
+        android:textSize="20sp"
+        android:paddingLeft="16dp"
+        android:gravity="left|center_vertical"
+        android:textColor="#00447d"/>
+
+    <Button
+        android:id="@+id/i_s"
+        android:background="@drawable/scale_button"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="人际关系敏感度自测量表"
+        android:textSize="20sp"
+        android:paddingLeft="16dp"
+        android:gravity="left|center_vertical"
+        android:textColor="#00447d"/>
+
+    <Button
+        android:id="@+id/dep"
+        android:background="@drawable/scale_button"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="抑郁自测量表"
+        android:textSize="20sp"
+        android:paddingLeft="16dp"
+        android:gravity="left|center_vertical"
+        android:textColor="#00447d"/>
+
+    <Button
+        android:id="@+id/anx"
+        android:background="@drawable/scale_button"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="焦虑自测量表"
+        android:textSize="20sp"
+        android:paddingLeft="16dp"
+        android:gravity="left|center_vertical"
+        android:textColor="#00447d"/>
+
+    <Button
+        android:id="@+id/hos"
+        android:background="@drawable/scale_button"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="敌对自测量表"
+        android:textSize="20sp"
+        android:paddingLeft="16dp"
+        android:gravity="left|center_vertical"
+        android:textColor="#00447d"/>
+
+    <Button
+        android:id="@+id/phob"
+        android:background="@drawable/scale_button"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="恐惧自测量表"
+        android:textSize="20sp"
+        android:paddingLeft="16dp"
+        android:gravity="left|center_vertical"
+        android:textColor="#00447d"/>
+
+    <Button
+        android:id="@+id/par"
+        android:background="@drawable/scale_button"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="偏执自测量表"
+        android:textSize="20sp"
+        android:paddingLeft="16dp"
+        android:gravity="left|center_vertical"
+        android:textColor="#00447d"/>
+
+    <Button
+        android:id="@+id/psy"
+        android:background="@drawable/scale_button"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:text="精神病性自测量表"
+        android:textSize="20sp"
+        android:paddingLeft="16dp"
+        android:gravity="left|center_vertical"
+        android:textColor="#00447d"/>
+
 
 </LinearLayout>

@@ -17,7 +17,7 @@ import java.util.ArrayList;
 
 import static com.example.android.questionnaire.MainActivity.QUESTIONS;
 import static com.example.android.questionnaire.MainActivity.QUESTION_NUMBER;
-
+// 一个暂时将不确定的题目存到review列表中的功能可以不管
 public class ReviewAnswersActivity extends AppCompatActivity {
 
     private ArrayList<Question> questions;

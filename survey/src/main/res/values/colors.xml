@@ -6,6 +6,15 @@
     <color name="button_color">#00679C</color>
     <color name="transparent_white">#22000000</color>
     <color name="transparent_blue">#99306FAD</color>
-    <color name="green">#008B00</color>
-    <color name="red">#e53935</color>
+
+    <color name="black">#000000</color>
+
+    <color name="yellow">#f5d14b</color>
+    <color name="red">#e66eb8</color>
+    <color name="green">#6bd669</color>
+    <color name="blue">#3d68ce</color>
+    <color name="Purple">#7e55fc</color>
+    <color name="touming">#11512124</color>
+
+
 </resources>

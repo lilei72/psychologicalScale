@@ -10,7 +10,7 @@ import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
-
+//欢迎页面
 public class WelcomeActivity extends AppCompatActivity {
 
     @Override
